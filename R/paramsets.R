@@ -545,8 +545,9 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         result$portfolio <- getPortfolio(result$portfolio.st)
         result$orderbook <- getOrderBook(result$portfolio.st)
         
-        cat(paste0("Param combo [ ",row.names(param.combo)," ] processed. Returning result."))
-        
+        # the name of the param.combo is later used as a suffix to the name of a portfolio in stats 
+        print(paste0("Param combo [ ", row.names(param.combo), " ] processed. Returning result."))
+                
         return(result)
     }
 
