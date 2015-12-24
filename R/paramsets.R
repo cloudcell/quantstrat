@@ -497,13 +497,42 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         .packages=c('quantstrat', packages),
         .combine=combine, .multicombine=TRUE, .maxcombine=max(2,nrow(param.combos)),
         .export=c(env.functions, symbols), ...)
-    # remove all but the param.combo iterator before calling %dopar%
-    # this allows us to pass '...' through foreach to the expression
+    # Source: the following 'Reference/Note' was deduced mostly from the 
+    #         'foreach()' function code analysis
+    # 
+    # Reference:
+    #   This case of the foreach() function has two "passthough container" arguments ('...'):
+    #   1. one's "own '...'" argument (as defined in the foreach(..., etc. etc.)), 
+    #      which accepts all the custom arguments a user of the function supplies, 
+    #      including the "external '...'" argument (explained next);
+    #   2. "external '...'" argument, passed from the apply.paramset() ('from above').
+    #  
+    #   When foreach gets a '...' as an external argument, it expands it 
+    #   and appends all the containing objects (constants/variables) 
+    #   to a list of arguments (i.e. the internal to foreach() variable 'args', 
+    #   see source code of 'foreach()'). When the environment of a function
+    #   (in this case, 'foreach()') contains a variable with the same name 
+    #   as a some variable passed to foreach() within the "external '...'", R 
+    #   removes such a variable from the '...' ("passthrough container") as it 
+    #   would create a conflict (i.e. the environment would have more than one 
+    #   variable with the same name). So to avoid the conflict and, therefore, 
+    #   removal of conflicting variables from the "external '...'", such 
+    #   variables must be removed from the environment of the foreach object.
+    #
+    # Note:
+    #   The expansion of the "external '...'" passthrough occurs at the time the 
+    #   "external '...'" is being used / passed to any function. Until the expansion
+    #   the local objects "override" the objects sitting within the '...' variable.
+    
+    # The following two lines of code remove all but the param.combo iterator before 
+    # calling %dopar% this allows us to pass '...' through foreach to the expression                                                                                           
     fe$args <- fe$args[1]
     fe$argnames <- fe$argnames[1]
     # now call %dopar%
     results <- fe %dopar%
     {
+        param.combo.num <- rownames(param.combo)
+        print(paste("Processing param.combo", param.combo.num))
         print(param.combo)
 
         # doSEQ and doMC make all environments available to the slave, but
@@ -532,7 +561,7 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
 
         result <- list()
         result$param.combo <- param.combo
-        result$portfolio.st <- paste(portfolio.st, rownames(param.combo), sep='.')
+        result$portfolio.st <- paste(portfolio.st, param.combo.num, sep='.')
 
         clone.portfolio(portfolio.st, result$portfolio.st)
         clone.orderbook(portfolio.st, result$portfolio.st)
@@ -573,8 +602,9 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         result$portfolio <- getPortfolio(result$portfolio.st)
         result$orderbook <- getOrderBook(result$portfolio.st)
         
-        # the name of the param.combo is later used as a suffix to the name of a portfolio in stats 
-        print(paste0("Param combo [ ", row.names(param.combo), " ] processed. Returning result."))
+        # portfolio name has param.combo rowname in suffix, so
+        # print param.combo number for diagnostics
+        print(paste("Returning results for param.combo", param.combo.num))
                 
         return(result)
     }
