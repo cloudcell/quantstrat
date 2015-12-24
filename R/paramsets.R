@@ -135,6 +135,30 @@ apply.constraints <- function(constraints, distributions, param.combos)
     param.combos
 }
 
+# XXX This function duplicates what the code in apply.paramset does
+# however, if paramsets can come from some external source (as the
+# function apply.paramset implies, there might be a reason for such 
+# function to exist 
+# ( I personally need this to be able to restart crashed apply.paramsets() ) 
+# Since functions expand.distributions() and apply.constraints() are
+# not officially exported, it makes sense either to do so (to export them)
+# or to add this utility function here and export _it_ (need feedback on this)
+generate.paramsets <- function( strategy.st, paramset.label )
+{      
+
+    strategy <- must.be.strategy(strategy.st)
+    must.be.paramset(strategy, paramset.label)
+
+    distributions <- strategy$paramsets[[paramset.label]]$distributions
+    constraints <- strategy$paramsets[[paramset.label]]$constraints
+
+    param.combos <- expand.distributions(distributions)
+    param.combos <- apply.constraints(constraints, distributions, param.combos)
+    rownames(param.combos) <- NULL  # reset rownames
+
+    paramsets
+}
+
 select.samples <- function(nsamples, param.combos)
 {
     nsamples <- min(nsamples, nrow(param.combos))
@@ -373,6 +397,7 @@ add.distribution.constraint <- function(strategy, paramset.label, distribution.l
 #' @param packages a vector specifying names of R packages to be loaded by the slave, default NULL
 #' @param audit a user-specified environment to store a copy of all portfolios, orderbooks and other data from the tests, or NULL to trash this information
 #' @param verbose return full information, in particular the .blotter environment, default FALSE
+#' @param verbose.wrk display progress of applyStrategy() in 'worker' process(es), default FALSE 
 #' @param paramsets a user-sepcified (sub)set of paramsets to run
 #' @param ... any other passthru parameters
 #'
@@ -381,7 +406,7 @@ add.distribution.constraint <- function(strategy, paramset.label, distribution.l
 #' @seealso \code{\link{add.distribution.constraint}}, \code{\link{add.distribution.constraint}}, \code{\link{delete.paramset}}
 #' @importFrom iterators iter
 
-apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st, mktdata=NULL, nsamples=0, user.func=NULL, user.args=NULL, calc='slave', audit=NULL, packages=NULL, verbose=FALSE, paramsets, ...)
+apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st, mktdata=NULL, nsamples=0, user.func=NULL, user.args=NULL, calc='slave', audit=NULL, packages=NULL, verbose=FALSE, verbose.wrk=FALSE, paramsets, ...)
 {
     must.have.args(match.call(), c('strategy.st', 'paramset.label', 'portfolio.st'))
 
@@ -394,6 +419,9 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
     account <- getAccount(account.st)
     orderbook <- getOrderBook(portfolio.st)
 
+    # XXX if paramsets are generated externally, distributions and constraints must be == NULL ? 
+    # see at the end of the function, when distributions & constraints are added to the audit file
+    # is that correct for the case with externally generated paramsets ???
     distributions <- strategy$paramsets[[paramset.label]]$distributions
     constraints <- strategy$paramsets[[paramset.label]]$constraints
 
@@ -522,7 +550,7 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         }
 
         strategy <- install.param.combo(strategy, param.combo, paramset.label)
-        applyStrategy(strategy, portfolios=result$portfolio.st, mktdata=mktdata, ...)
+        applyStrategy(strategy, portfolios=result$portfolio.st, mktdata=mktdata, verbose=verbose.wrk, ...)
 
         if(exists('redisContext'))
         {
@@ -558,6 +586,9 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         .audit <- NULL
     else
     {
+        # XXX what should be done with externally generated paramsets ?
+        # especially if they don't correspond to distributions & constraints
+        # should those paramsets be added to the audit file as well?
         assign('distributions', distributions, envir=.audit)
         assign('constraints', constraints, envir=.audit)
         assign('paramset.label', paramset.label, envir=.audit)
