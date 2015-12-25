@@ -143,7 +143,7 @@ apply.constraints <- function(constraints, distributions, param.combos)
 # Since functions expand.distributions() and apply.constraints() are
 # not officially exported, it makes sense either to do so (to export them)
 # or to add this utility function here and export _it_ (need feedback on this)
-generate.paramsets <- function( strategy.st, paramset.label )
+generate.paramsets <- function( strategy.st, paramset.label, nsamples=0 )
 {      
 
     strategy <- must.be.strategy(strategy.st)
