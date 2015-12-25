@@ -156,6 +156,7 @@ generate.paramsets <- function( strategy.st, paramset.label )
     param.combos <- apply.constraints(constraints, distributions, param.combos)
     rownames(param.combos) <- NULL  # reset rownames
 
+    paramsets <- param.combos
     paramsets
 }
 
@@ -595,7 +596,10 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         {
             updatePortf(result$portfolio.st, ...)
             result$tradeStats <- tradeStats(result$portfolio.st)
-
+            
+            # XXX the following 2 lines must be moved AFTER
+            # getPortfolio and getOrderBook if they are
+            # to be accessible to the user.func !
             if(!is.null(user.func) && !is.null(user.args))
                 result$user.func <- do.call(user.func, user.args)
         }
