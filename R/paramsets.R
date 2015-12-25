@@ -156,6 +156,16 @@ generate.paramsets <- function( strategy.st, paramset.label, nsamples=0 )
     param.combos <- apply.constraints(constraints, distributions, param.combos)
     rownames(param.combos) <- NULL  # reset rownames
 
+    # A Use Case for This Feature:
+    # 1. An analyst may initially want to sample a small area and save both 
+    #    the paramsets and calculations.
+    # 2. After preliminary analysis, an analyst may want to increase the sample size.
+    #    Generation of a sample outside the function apply.paramset() allows to 
+    #    reduce calculations by removing previously calculated combinations of 
+    #    parameters in a separate step.
+    if(nsamples > 0)
+        param.combos <- select.samples(nsamples, param.combos)
+
     paramsets <- param.combos
     paramsets
 }
