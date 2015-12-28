@@ -472,7 +472,7 @@ apply.paramset.signal.analysis<-function(strategy.st, paramset.label, portfolio.
   #   Loop through each symbol
   # TODO: parallelize it
   for(i in 1:nrow(param.combos)){  # param.combo = param.combos[1,]
-    param.combo = param.combos[i,]
+    param.combo <- param.combos[i,,drop=FALSE]
     
     if(verbose)cat("Applying Parameter Set: ",toString(param.combo),'\n')  
     
@@ -967,6 +967,6 @@ signal.path.plot<-function(data,main='Cumulative Return Paths'){
 # This library is distributed under the terms of the GNU Public License (GPL)
 # for full details see the file COPYING
 #
-# $Id: signals.R 1709 2015-11-01 21:36:29Z bodanker $
+# $Id: signals.R 1729 2015-12-26 19:19:52Z bodanker $
 #
 ###############################################################################

@@ -7,7 +7,7 @@
 # This library is distributed under the terms of the GNU Public License (GPL)
 # for full details see the file COPYING
 #
-# $Id: paramsets.R 1723 2015-12-11 14:53:33Z bodanker $
+# $Id: paramsets.R 1729 2015-12-26 19:19:52Z bodanker $
 #
 ###############################################################################
 #
@@ -186,6 +186,10 @@ select.samples <- function(nsamples, param.combos)
 
 install.param.combo <- function(strategy, param.combo, paramset.label)
 {
+    if (is.null(dim(param.combo))) {
+        stop("'param.combo' must have a dim attribute")
+    }
+
     for(param.label in colnames(param.combo))
     {
         distribution <- strategy$paramsets[[paramset.label]]$distributions[[param.label]]
@@ -535,8 +539,8 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
     #   "external '...'" is being used / passed to any function. Until the expansion
     #   the local objects "override" the objects sitting within the '...' variable.
     
-    # The following two lines of code remove all but the param.combo iterator before 
-    # calling %dopar% this allows us to pass '...' through foreach to the expression                                                                                           
+    # remove all but the param.combo iterator before calling %dopar%
+    # this allows us to pass '...' through foreach to the expression
     fe$args <- fe$args[1]
     fe$argnames <- fe$argnames[1]
     # now call %dopar%
@@ -606,7 +610,7 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         {
             updatePortf(result$portfolio.st, ...)
             result$tradeStats <- tradeStats(result$portfolio.st)
-            
+
             # XXX the following 2 lines must be moved AFTER
             # getPortfolio and getOrderBook if they are
             # to be accessible to the user.func !
@@ -615,11 +619,11 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         }
         result$portfolio <- getPortfolio(result$portfolio.st)
         result$orderbook <- getOrderBook(result$portfolio.st)
-        
+
         # portfolio name has param.combo rowname in suffix, so
         # print param.combo number for diagnostics
         print(paste("Returning results for param.combo", param.combo.num))
-                
+
         return(result)
     }
 

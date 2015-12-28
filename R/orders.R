@@ -64,7 +64,7 @@ put.orderbook <- function(portfolio.st, orderbook, envir=.strategy)
 #' @param \dots any other passthrough parameters
 #' @concept order book
 #' @export
-initOrders <- function(portfolio=NULL, symbols=NULL, initDate = '1999-12-31', ...)
+initOrders <- function(portfolio=NULL, symbols=NULL, initDate = '1950-01-01', ...)
 {
     # NOTE we could store all of these in one object, but I think that might get big
     orders<- try(getOrderBook(portfolio),silent=TRUE)
@@ -550,6 +550,6 @@ updateOrders <- function(portfolio,
 # This library is distributed under the terms of the GNU Public License (GPL)
 # for full details see the file COPYING
 #
-# $Id: orders.R 1712 2015-11-02 17:48:45Z bodanker $
+# $Id: orders.R 1725 2015-12-14 12:59:13Z bodanker $
 #
 ###############################################################################
