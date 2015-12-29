@@ -576,15 +576,19 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
             updatePortf(result$portfolio.st, ...)
             result$tradeStats <- tradeStats(result$portfolio.st)
 
+        }                                                        
+        
+        result$portfolio <- getPortfolio(result$portfolio.st)
+        result$orderbook <- getOrderBook(result$portfolio.st)
+        
+        if(calc == 'slave') {
             # XXX the following 2 lines must be moved AFTER
             # getPortfolio and getOrderBook if they are
             # to be accessible to the user.func !
             if(!is.null(user.func) && !is.null(user.args))
                 result$user.func <- do.call(user.func, user.args)
-        }
-        result$portfolio <- getPortfolio(result$portfolio.st)
-        result$orderbook <- getOrderBook(result$portfolio.st)
 
+				}
         # portfolio name has param.combo rowname in suffix, so
         # print param.combo number for diagnostics
         print(paste("Returning results for param.combo", param.combo.num))
