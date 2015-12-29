@@ -135,41 +135,6 @@ apply.constraints <- function(constraints, distributions, param.combos)
     param.combos
 }
 
-# XXX This function duplicates what the code in apply.paramset does
-# however, if paramsets can come from some external source (as the
-# function apply.paramset implies, there might be a reason for such 
-# function to exist 
-# ( I personally need this to be able to restart crashed apply.paramsets() ) 
-# Since functions expand.distributions() and apply.constraints() are
-# not officially exported, it makes sense either to do so (to export them)
-# or to add this utility function here and export _it_ (need feedback on this)
-generate.paramsets <- function( strategy.st, paramset.label, nsamples=0 )
-{      
-
-    strategy <- must.be.strategy(strategy.st)
-    must.be.paramset(strategy, paramset.label)
-
-    distributions <- strategy$paramsets[[paramset.label]]$distributions
-    constraints <- strategy$paramsets[[paramset.label]]$constraints
-
-    param.combos <- expand.distributions(distributions)
-    param.combos <- apply.constraints(constraints, distributions, param.combos)
-    rownames(param.combos) <- NULL  # reset rownames
-
-    # A Use Case for This Feature:
-    # 1. An analyst may initially want to sample a small area and save both 
-    #    the paramsets and calculations.
-    # 2. After preliminary analysis, an analyst may want to increase the sample size.
-    #    Generation of a sample outside the function apply.paramset() allows to 
-    #    reduce calculations by removing previously calculated combinations of 
-    #    parameters in a separate step.
-    if(nsamples > 0)
-        param.combos <- select.samples(nsamples, param.combos)
-
-    paramsets <- param.combos
-    paramsets
-}
-
 select.samples <- function(nsamples, param.combos)
 {
     nsamples <- min(nsamples, nrow(param.combos))
