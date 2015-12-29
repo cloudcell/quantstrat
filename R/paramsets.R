@@ -386,7 +386,8 @@ add.distribution.constraint <- function(strategy, paramset.label, distribution.l
 #' @seealso \code{\link{add.distribution.constraint}}, \code{\link{add.distribution.constraint}}, \code{\link{delete.paramset}}
 #' @importFrom iterators iter
 
-apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st, mktdata=NULL, nsamples=0, user.func=NULL, user.args=NULL, calc='slave', audit=NULL, packages=NULL, verbose=FALSE, verbose.wrk=FALSE, paramsets, ...)
+#XXX foreach and quantstrat must start using 'bigmemory' package, until then the option 'save_memory' (memory on the master process, that is) shall be used. Otherwise the process crashes.
+apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st, mktdata=NULL, nsamples=0, user.func=NULL, user.args=NULL, calc='slave', audit=NULL, packages=NULL, verbose=FALSE, verbose.wrk=FALSE, save_memory=TRUE, paramsets, ...)
 {
     must.have.args(match.call(), c('strategy.st', 'paramset.label', 'portfolio.st'))
 
@@ -587,8 +588,21 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
             # to be accessible to the user.func !
             if(!is.null(user.func) && !is.null(user.args))
                 result$user.func <- do.call(user.func, user.args)
+            # here, the portfolio & orderbook can be saved on disk
+            # before we have a solution with 'bigmemory' package (or similar)
+				}    
 
-				}
+        # spare the memory of the master process:
+        # as an example:  1-year 1-minute bar data takes 4.3 Mbytes on disk
+        # in RAM, in R environment the same data breaks down to 
+        # 5192 bytes - tradeStats
+        # 36.3 Megabytes - 'portfolio' data
+        # 3.6 Megabytes - 'order book' data        
+        if(save_memory) {
+            result$portfolio <- NULL #getPortfolio(result$	portfolio.st)
+            result$orderbook <- NULL #getOrderBook(result$portfolio.st) 	
+        }
+
         # portfolio name has param.combo rowname in suffix, so
         # print param.combo number for diagnostics
         print(paste("Returning results for param.combo", param.combo.num))
