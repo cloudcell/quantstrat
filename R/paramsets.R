@@ -389,7 +389,7 @@ add.distribution.constraint <- function(strategy, paramset.label, distribution.l
 #TODO: this function is to be restored to the original while the modified version shall be included in the package 'rfintools'
 #XXX foreach and quantstrat must start using 'bigmemory' package, until then the option 'save_memory' (memory on the master process, that is) shall be used. Otherwise the process crashes.
 # FIXME: save_memory and combine_from_backup & other hacks
-apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st, mktdata=NULL, nsamples=0, user.func=NULL, user.args=NULL, calc='slave', audit=NULL, packages=NULL, verbose=FALSE, verbose.wrk=FALSE, save_memory=TRUE, combine_from_backup=FALSE, paramsets, ...)
+apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st, mktdata=NULL, nsamples=0, user.func=NULL, user.args=NULL, calc='slave', audit=NULL, packages=NULL, verbose=FALSE, verbose.wrk=FALSE, save_memory=TRUE, combine_from_backup=TRUE, paramsets, ...)
 {
     must.have.args(match.call(), c('strategy.st', 'paramset.label', 'portfolio.st'))
 
