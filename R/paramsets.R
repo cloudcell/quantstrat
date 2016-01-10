@@ -386,8 +386,10 @@ add.distribution.constraint <- function(strategy, paramset.label, distribution.l
 #' @seealso \code{\link{add.distribution.constraint}}, \code{\link{add.distribution.constraint}}, \code{\link{delete.paramset}}
 #' @importFrom iterators iter
 
+#TODO: this function is to be restored to the original while the modified version shall be included in the package 'rfintools'
 #XXX foreach and quantstrat must start using 'bigmemory' package, until then the option 'save_memory' (memory on the master process, that is) shall be used. Otherwise the process crashes.
-apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st, mktdata=NULL, nsamples=0, user.func=NULL, user.args=NULL, calc='slave', audit=NULL, packages=NULL, verbose=FALSE, verbose.wrk=FALSE, save_memory=TRUE, paramsets, ...)
+# FIXME: save_memory and combine_from_backup & other hacks
+apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st, mktdata=NULL, nsamples=0, user.func=NULL, user.args=NULL, calc='slave', audit=NULL, packages=NULL, verbose=FALSE, verbose.wrk=FALSE, save_memory=TRUE, combine_from_backup=FALSE, paramsets, ...)
 {
     must.have.args(match.call(), c('strategy.st', 'paramset.label', 'portfolio.st'))
 
@@ -431,11 +433,14 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
     else
         .audit <- audit
 
-    combine <- function(...)
+    combine <- function(combine_from_backup=combine_from_backup, ...)
     {
         args <- list(...)
 
-        results <- list()
+        results <- list()                          
+        
+        if(combine_from_backup) return(results) # combine results externally (using backup data) 
+        
         for(i in 1:length(args))
         {
             r <- args[[i]]
@@ -603,6 +608,11 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
             result$orderbook <- NULL #getOrderBook(result$portfolio.st) 	
         }
 
+        if(combine_from_backup) {
+             print(paste0("Processed param.combo ", param.combo.num,". \"result\" is set to NULL. Use backup data to aggregate result." ))
+             result <- NULL
+        } 
+        
         # portfolio name has param.combo rowname in suffix, so
         # print param.combo number for diagnostics
         print(paste("Returning results for param.combo", param.combo.num))
