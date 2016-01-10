@@ -433,13 +433,16 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
     else
         .audit <- audit
 
-    combine <- function(combine_from_backup=combine_from_backup, ...)
+    combine <- function(...)
     {
         args <- list(...)
 
         results <- list()                          
         
-        if(combine_from_backup) return(results) # combine results externally (using backup data) 
+        if(combine_from_backup) { 
+            print("Skipping the in-memory combine process.")
+            return(results) # combine results externally (using backup data) 
+        }                         
         
         for(i in 1:length(args))
         {
