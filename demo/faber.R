@@ -53,22 +53,11 @@ if(oldtz=='') {
 # Try to clean up in case the demo was run previously
 suppressWarnings(rm("account.faber","portfolio.faber",pos=.blotter))
 suppressWarnings(rm("ltaccount", "ltportfolio", "ClosePrice", "CurrentDate", "equity", 
-            "GSPC", "stratFaber", "initDate", "initEq", "Posn", "UnitSize", "verbose"))
+            "GSPC", "stratFaber", "startDate", "initEq", "Posn", "UnitSize", "verbose"))
 suppressWarnings(rm("order_book.faber",pos=.strategy))
 
-##### PLACE DEMO AND TEST DATES HERE #################
-#
-#if(isTRUE(options('in_test')$in_test))
-#  # use test dates
-#  {initDate="2011-01-01" 
-#  endDate="2012-12-31"   
-#  } else
-#  # use demo defaults
-#  {initDate="1999-12-31"
-#  endDate=Sys.Date()}
-
 # Set initial values
-initDate='1997-12-31'
+startDate='1997-12-31'
 initEq=100000
 
 # Set up instruments with FinancialInstruments package
@@ -92,9 +81,9 @@ for(symbol in symbols) {
 }
 
 # Initialize portfolio and account
-initPortf('faber', symbols=symbols, initDate=initDate)
-initAcct('faber', portfolios='faber', initDate=initDate, initEq=100000)
-initOrders(portfolio='faber', initDate=initDate)
+initPortf('faber', symbols=symbols)
+initAcct('faber', portfolios='faber', initEq=initEq)
+initOrders(portfolio='faber')
 
 print("setup completed")
 
@@ -172,12 +161,6 @@ Sys.setenv(TZ=oldtz)
 # This library is distributed under the terms of the GNU Public License (GPL)
 # for full details see the file COPYING
 #
-# $Id: faber.R 1632 2014-09-16 14:00:04Z braverock $
+# $Id: faber.R 1724 2015-12-14 12:54:08Z bodanker $
 #
 ###############################################################################
-
-##### PLACE THIS BLOCK AT END OF DEMO SCRIPT ################### 
-# book  = getOrderBook(port)
-# stats = tradeStats(port)
-# rets  = PortfReturns(acct)
-################################################################

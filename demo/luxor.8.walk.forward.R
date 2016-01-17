@@ -29,12 +29,12 @@ if (!requireNamespace("PerformanceAnalytics", quietly=TRUE))
 
 ### blotter
 
-initPortf(portfolio.st, symbols='GBPUSD', initDate=initDate, currency='USD')
-initAcct(account.st, portfolios=portfolio.st, initDate=initDate, currency='USD', initEq=100000)
+initPortf(portfolio.st, symbols='GBPUSD', currency='USD')
+initAcct(account.st, portfolios=portfolio.st, currency='USD', initEq=100000)
 
 ### quantstrat
 
-initOrders(portfolio.st, initDate=initDate)
+initOrders(portfolio.st)
 
 load.strategy(strategy.st)
 
@@ -45,7 +45,7 @@ enable.rule(strategy.st, 'chain', 'TakeProfit')
 addPosLimit(
             portfolio=portfolio.st,
             symbol='GBPUSD',
-            timestamp=initDate,
+            timestamp=startDate,
             maxpos=.orderqty)
 
 ### objective function
@@ -81,16 +81,13 @@ r <- walk.forward(strategy.st,
                   portfolio.st=portfolio.st,
                   account.st=account.st,
                   period='days',
-                  k.training=30,
-                  k.testing=30,
-#                   k.training=3,
-#                   k.testing=1,
+                  k.training=3,
+                  k.testing=1,
                   obj.func=my.obj.func,
                   obj.args=list(x=quote(result$apply.paramset)),
                   user.func=ess,
                   user.args=list('account.st'=account.st, 'portfolio.st'=portfolio.st),
                   audit.prefix='wfa',
-                  #anchored=TRUE,
                   anchored=FALSE,
                   verbose=TRUE)
 
@@ -99,10 +96,6 @@ r <- walk.forward(strategy.st,
 pdf(paste('GBPUSD', .from, .to, 'pdf', sep='.'))
 chart.Posn(portfolio.st)
 dev.off()
-
-
-chart.Posn(portfolio.st)
-
 
 ts <- tradeStats(portfolio.st)
 save(ts, file=paste('GBPUSD', .from, .to, 'RData', sep='.'))
