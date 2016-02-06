@@ -2,7 +2,7 @@
 # R (http://r-project.org/) Quantitative Strategy Model Framework
 #
 # Copyright (c) 2009-2015
-# Peter Carl, Dirk Eddelbuettel, Brian G. Peterson, Jeffrey Ryan, and Joshua Ulrich 
+# Peter Carl, Dirk Eddelbuettel, Brian G. Peterson, Jeffrey Ryan, and Joshua Ulrich
 #
 # This library is distributed under the terms of the GNU Public License (GPL)
 # for full details see the file COPYING
@@ -16,18 +16,18 @@
 ###############################################################################
 
 #' Rolling Walk Forward Analysis
-#' 
+#'
 #' A wrapper for apply.paramset() and applyStrategy(), implementing a Rolling Walk Forward Analysis (WFA).
 #'
 #' walk.forward executes a strategy on a portfolio, while
 #' rolling a re-optimization of one of the strategies parameter sets during a specified time period (training window), then selecting an optimal
 #' parameter combination from the parameter set using an obj function, then applying the selected parameter combo to the next out-of-sample
 #' time period immediately following the training window (testing window). Once completed,
-#' the training window is shifted forward by a time period equal to the testing window size, and the process is repeated. 
+#' the training window is shifted forward by a time period equal to the testing window size, and the process is repeated.
 #' WFA stops when there are insufficient data left for a full testing window.
 #'
 #' For a complete description, see Jaekle&Tomasini chapter 6.
-#' 
+#'
 #' @param portfolio.st the name of the portfolio object
 #' @param account.st the name of the account object
 #' @param strategy.st the name of the strategy object
@@ -53,11 +53,11 @@
 #' @export
 
 walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
-    period, k.training, nsamples=0, audit.prefix=NULL, k.testing,
-    obj.func=function(x){which(x==max(x))},
-    obj.args=list(x=quote(tradeStats.list$Net.Trading.PL)),
-    anchored=FALSE, include.insamples=TRUE,
-    ..., verbose=FALSE)
+                         period, k.training, nsamples=0, audit.prefix=NULL, k.testing,
+                         obj.func=function(x){which(x==max(x))},
+                         obj.args=list(x=quote(tradeStats.list$Net.Trading.PL)),
+                         anchored=FALSE, include.insamples=TRUE,
+                         ..., verbose=FALSE)
 {
     must.have.args(match.call(), c('portfolio.st', 'strategy.st', 'paramset.label', 'k.training'))
 
@@ -110,6 +110,11 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
         result$training.timespan <- training.timespan
 
+        # TODO: make a utility function that prints a message inside
+        # Such output format stands out in large logs
+        print("+-------------------------------------------------------------------+")
+        print("| Phase 1.1: Training                                                |")
+        print("+-------------------------------------------------------------------+")
         print(paste('=== training', paramset.label, 'on', training.timespan))
 
         .audit <- NULL
@@ -118,9 +123,9 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
         # run backtests on training window
         result$apply.paramset <- apply.paramset(strategy.st=strategy.st, paramset.label=paramset.label,
-            portfolio.st=portfolio.st, account.st=account.st,
-            mktdata=symbol[training.timespan], nsamples=nsamples,
-            calc='slave', audit=.audit, verbose=verbose, ...=...)
+                                                portfolio.st=portfolio.st, account.st=account.st,
+                                                mktdata=symbol[training.timespan], nsamples=nsamples,
+                                                calc='slave', audit=.audit, verbose=verbose, ...=...)
 
         tradeStats.list <- result$apply.paramset$tradeStats
 
@@ -129,7 +134,11 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
             if(!is.function(obj.func))
                 stop(paste(obj.func, 'unknown obj function', sep=': '))
 
-            # select best param.combo
+            print("+-------------------------------------------------------------------+")
+            print("| Phase 1.2: Selecting the best param combo                         |")
+            print("+-------------------------------------------------------------------+")
+
+            # select best param.combo (produces a selection vector)
             param.combo.idx <- do.call(obj.func, obj.args)
             if(length(param.combo.idx) == 0)
                 stop('obj.func() returned empty result')
@@ -137,15 +146,45 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
             param.combo <- tradeStats.list[param.combo.idx, 1:grep('Portfolio', names(tradeStats.list)) - 1]
             param.combo.nr <- row.names(tradeStats.list)[param.combo.idx]
 
+            print("the best param combo row numbers:")
+            print(param.combo.nr)
+
+            ### FIXME: for some reason, enabling this 'filter' causes the
+            ### objective function to fail to select any combo
+            ### later in the process
+            # if(nrow(param.combo)>1) {
+            #     warning(paste0("Multiple combo solutions detected: using only ",
+            #                 "the first.\nYou may want to adjust your objective ",
+            #                 "function so it selects only one solution, or to \n",
+            #                 "extend this code to enable 'forked' testing and ",
+            #                 "training over multiple solutions."))
+            #     param.combo <- param.combo[1,]
+            # }
+
             if(!is.null(.audit))
             {
                 assign('obj.func', obj.func, envir=.audit)
                 assign('param.combo.idx', param.combo.idx, envir=.audit)
                 assign('param.combo.nr', param.combo.nr, envir=.audit)
                 assign('param.combo', param.combo, envir=.audit)
+
+                # index() produces spaces b/n date & time and colons (":"),
+                # which may cause errors, so they need a substitute (e.g. "-")
+                save(.audit, file=paste(audit.prefix, symbol.st,
+                                        gsub("[\\s:]*","-",index(symbol[training.start])),
+                                        gsub("[\\s:]*","-",index(symbol[training.end])),
+                                        'RData', sep='.'))
+
+                .audit <- NULL
             }
 
+            print("+-------------------------------------------------------------------+")
+            print("| Phase 2: Testing the best param combo OOS                         |")
+            print("+-------------------------------------------------------------------+")
             # configure strategy to use selected param.combo
+            # TODO: make an error check in 'install.param.combo' for
+            # 'multiple combos' to prevent warnings and side effects of
+            # using a combo whose values are multidimensional vectors
             strategy <- install.param.combo(strategy, param.combo, paramset.label)
 
             result$testing.timespan <- testing.timespan
@@ -164,12 +203,21 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
             k <- k + 1
         }
 
-        if(!is.null(.audit))
-        {
-            save(.audit, file=paste(audit.prefix, symbol.st, index(symbol[training.start]), index(symbol[training.end]), 'RData', sep='.'))
-
-            .audit <- NULL
-        }
+        # if(!is.null(.audit))
+        # {
+        #     # Moving this part closer to the place where .audit data is formed
+        #     # it would be much easier to read the code instead of jumping back
+        #     # and forth b/n training and testing pieces of the code
+        #
+        #     # index() produces spaces b/n date & time and colons (":"),
+        #     # which may cause errors, so they need a substitute (e.g. "-")
+        #     save(.audit, file=paste(audit.prefix, symbol.st,
+        #                             gsub("[\\s:]*","-",index(symbol[training.start])),
+        #                             gsub("[\\s:]*","-",index(symbol[training.end])),
+        #                             'RData', sep='.'))
+        #
+        #     .audit <- NULL
+        # }
 
         results[[k]] <- result
 
@@ -183,6 +231,9 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
     if(!is.null(audit.prefix))
     {
+        print("+-------------------------------------------------------------------+")
+        print("| Phase 3.1: Preparing to save audit data                           |")
+        print("+-------------------------------------------------------------------+")
         .audit <- new.env()
 
         portfolio <- getPortfolio(portfolio.st)
@@ -197,18 +248,22 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
         if(include.insamples)
         {
+            print("+-------------------------------------------------------------------+")
+            print("| Phase 3.2: Run backtests on in-sample reference portfolios        |")
+            print("+-------------------------------------------------------------------+")
             # run backtests on in-sample reference portfolios
             result$apply.paramset <- apply.paramset(strategy.st=strategy.st, paramset.label=paramset.label,
-                portfolio.st=portfolio.st, account.st=account.st,
-                #mktdata=NULL, nsamples=nsamples,
-                mktdata=symbol[total.timespan], nsamples=nsamples,
-                calc='slave', audit=.audit, verbose=verbose, ...=...)
+                                                    portfolio.st=portfolio.st, account.st=account.st,
+                                                    #mktdata=NULL, nsamples=nsamples,
+                                                    mktdata=symbol[total.timespan], nsamples=nsamples,
+                                                    calc='slave', audit=.audit, verbose=verbose, ...=...)
         }
 
+        # audit prefix must not contains spaces
         save(.audit, file=paste(audit.prefix, 'results', 'RData', sep='.'))
 
         .audit <- NULL
     }
     return(results)
-} 
+}
 

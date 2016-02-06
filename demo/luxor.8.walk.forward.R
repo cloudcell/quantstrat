@@ -82,7 +82,12 @@ r <- walk.forward(strategy.st,
                   account.st=account.st,
                   period='days',
                   k.training=3,
-                  k.testing=1,
+                  # 1 day does not contain enough data points to calculate SMA
+                  # with a length of over 40, ( see this log
+                  # https://www.irccloud.com/pastebin/REaa4uZV/debugging )
+                  # TODO: report such cases clearly or proactively determine
+                  # that indicators might produce such errors
+                  k.testing=3, #1,
                   obj.func=my.obj.func,
                   obj.args=list(x=quote(result$apply.paramset)),
                   user.func=ess,
@@ -94,8 +99,10 @@ r <- walk.forward(strategy.st,
 ### analyse
 
 pdf(paste('GBPUSD', .from, .to, 'pdf', sep='.'))
-chart.Posn(portfolio.st)
 dev.off()
+
+par(ask=FALSE) # avoid having to hit 'Enter'
+chart.Posn(portfolio.st)
 
 ts <- tradeStats(portfolio.st)
 save(ts, file=paste('GBPUSD', .from, .to, 'RData', sep='.'))
