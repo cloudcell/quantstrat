@@ -232,7 +232,7 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
     if(!is.null(audit.prefix))
     {
         print("+-------------------------------------------------------------------+")
-        print("| Phase 3.1: Preparing to save audit data                           |")
+        print("| Phase 3.1: Preparing and saving audit data                        |")
         print("+-------------------------------------------------------------------+")
         .audit <- new.env()
 
