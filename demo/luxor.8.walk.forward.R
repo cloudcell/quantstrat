@@ -36,7 +36,9 @@ initAcct(account.st, portfolios=portfolio.st, currency='USD', initEq=100000)
 
 initOrders(portfolio.st)
 
-load.strategy(strategy.st)
+# no need to load strategy as the sourced file "luxor.5.strategy.ordersets.R"
+# builds it from scratch anyway
+# load.strategy(strategy.st)
 
 enable.rule(strategy.st, 'chain', 'StopLoss')
 #enable.rule(strategy.st, 'chain', 'StopTrailing')
@@ -52,6 +54,13 @@ addPosLimit(
 
 ess <- function(account.st, portfolio.st)
 {
+    # this function may cause failure of 'foreach' on small datasets
+    # at combine stage, try allowing it to run to see a crash demonstration.
+    # TODO: post an issue at github to handle errors within user functions
+    #       without crashing 'foreach'
+    # TODO: fix this function by allowing it to handle small datasets
+    return(0)
+
     require(robustbase, quietly=TRUE)
     require(PerformanceAnalytics, quietly=TRUE)
 
@@ -67,11 +76,39 @@ my.obj.func <- function(x)
 {
     # pick one of the following objective functions (uncomment)
 
-    #return(max(x$tradeStats$Max.Drawdown) == x$tradeStats$Max.Drawdown)
+    # result <- (max(x$tradeStats$Max.Drawdown) == x$tradeStats$Max.Drawdown)
 
-    #return(max(x$tradeStats$Net.Trading.PL) == x$tradeStats$Net.Trading.PL)
+    # result <- (max(x$tradeStats$Net.Trading.PL) == x$tradeStats$Net.Trading.PL)
 
-    return(max(x$user.func$GBPUSD.DailyEndEq) == x$user.func$GBPUSD.DailyEndEq)
+    # result <- (max(x$user.func$GBPUSD.DailyEndEq) == x$user.func$GBPUSD.DailyEndEq)
+
+    #-------------------------------------------------------------------------#
+    # A step-by-step approach to defining the objective function
+
+    # Select portfolios related to the symbol
+    # (important for multi-instrument portfolios)
+    input <- x$tradeStats[(x$tradeStats$Symbol == 'GBPUSD'),]
+
+    # Choose decision parameter (uncomment)
+    # param <- input$Profit.Factor
+    param <- input$Max.Drawdown
+    # param <- input$Net.Trading.PL
+
+    # Simple decision rule (uncomment / adjust as needed)
+    # result <- (max(param) == param)
+    result <- (min(param) == param)
+
+
+    # Leaving only a single optimum
+    if(length(which(result == TRUE)) > 1) {
+        warning("discarding extra objective function result(s)")
+        uniqueIdx <- min(which(result == TRUE))
+        result[] <- FALSE
+        result[uniqueIdx] <- TRUE
+    }
+
+    # return the selection vector
+    result
 }
 
 ### walk.forward
@@ -93,17 +130,21 @@ r <- walk.forward(strategy.st,
                   user.func=ess,
                   user.args=list('account.st'=account.st, 'portfolio.st'=portfolio.st),
                   audit.prefix='wfa',
+                  # anchored=TRUE,
                   anchored=FALSE,
                   verbose=TRUE)
 
 ### analyse
-
+print("saving a chart as a pdf file")
 pdf(paste('GBPUSD', .from, .to, 'pdf', sep='.'))
 dev.off()
 
+print("drawing a chart on the screen")
 par(ask=FALSE) # avoid having to hit 'Enter'
 chart.Posn(portfolio.st)
 
+print("saving tradeStats")
 ts <- tradeStats(portfolio.st)
 save(ts, file=paste('GBPUSD', .from, .to, 'RData', sep='.'))
 
+print("# end of demo #")

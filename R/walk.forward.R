@@ -113,7 +113,7 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
         # TODO: make a utility function that prints a message inside
         # Such output format stands out in large logs
         print("+-------------------------------------------------------------------+")
-        print("| Phase 1.1: Training                                                |")
+        print("| Phase 1.1: Training                                               |")
         print("+-------------------------------------------------------------------+")
         print(paste('=== training', paramset.label, 'on', training.timespan))
 
@@ -143,23 +143,27 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
             if(length(param.combo.idx) == 0)
                 stop('obj.func() returned empty result')
 
+            # print("the best param combo selection vector:")
+            # print(param.combo.idx)
+
             param.combo <- tradeStats.list[param.combo.idx, 1:grep('Portfolio', names(tradeStats.list)) - 1]
             param.combo.nr <- row.names(tradeStats.list)[param.combo.idx]
 
             print("the best param combo row numbers:")
             print(param.combo.nr)
 
-            ### FIXME: for some reason, enabling this 'filter' causes the
-            ### objective function to fail to select any combo
-            ### later in the process
-            # if(nrow(param.combo)>1) {
-            #     warning(paste0("Multiple combo solutions detected: using only ",
-            #                 "the first.\nYou may want to adjust your objective ",
-            #                 "function so it selects only one solution, or to \n",
-            #                 "extend this code to enable 'forked' testing and ",
-            #                 "training over multiple solutions."))
-            #     param.combo <- param.combo[1,]
-            # }
+            if(nrow(param.combo)>1) {
+                warning(paste0("Multiple combo solutions detected: using only ",
+                            "the first.\nYou may want to adjust your objective ",
+                            "function so it selects only one solution, or to \n",
+                            "extend this code to enable 'forked' testing and ",
+                            "training over multiple solutions."))
+                param.combo <- param.combo[1,] # take the first
+                # param.combo <- param.combo[nrow(param.combo),] # take the last
+            }
+
+            print("selected combo(s):")
+            print(param.combo)
 
             if(!is.null(.audit))
             {
@@ -171,20 +175,22 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
                 # index() produces spaces b/n date & time and colons (":"),
                 # which may cause errors, so they need a substitute (e.g. "-")
                 save(.audit, file=paste(audit.prefix, symbol.st,
-                                        gsub("[\\s:]*","-",index(symbol[training.start])),
-                                        gsub("[\\s:]*","-",index(symbol[training.end])),
+                                        gsub("[\\ :]","-",index(symbol[training.start])),
+                                        gsub("[\\ :]","-",index(symbol[training.end])),
                                         'RData', sep='.'))
 
                 .audit <- NULL
             }
 
             print("+-------------------------------------------------------------------+")
-            print("| Phase 2: Testing the best param combo OOS                         |")
+            print("| Phase 2: Testing the best param combo out of sample               |")
             print("+-------------------------------------------------------------------+")
             # configure strategy to use selected param.combo
             # TODO: make an error check in 'install.param.combo' for
             # 'multiple combos' to prevent warnings and side effects of
             # using a combo whose values are multidimensional vectors
+            print("param combo being installed:")
+            print(param.combo)
             strategy <- install.param.combo(strategy, param.combo, paramset.label)
 
             result$testing.timespan <- testing.timespan
@@ -232,7 +238,7 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
     if(!is.null(audit.prefix))
     {
         print("+-------------------------------------------------------------------+")
-        print("| Phase 3.1: Preparing and saving audit data                        |")
+        print("| Phase 3.1: Preparing audit data for saving                        |")
         print("+-------------------------------------------------------------------+")
         .audit <- new.env()
 
@@ -249,7 +255,7 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
         if(include.insamples)
         {
             print("+-------------------------------------------------------------------+")
-            print("| Phase 3.2: Run backtests on in-sample reference portfolios        |")
+            print("| Phase 3.2: Running backtests on in-sample reference portfolios    |")
             print("+-------------------------------------------------------------------+")
             # run backtests on in-sample reference portfolios
             result$apply.paramset <- apply.paramset(strategy.st=strategy.st, paramset.label=paramset.label,
@@ -264,6 +270,10 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
         .audit <- NULL
     }
+
+    print("+-------------------------------------------------------------------+")
+    print("| Returning results and exiting walk.forward()                      |")
+    print("+-------------------------------------------------------------------+")
     return(results)
 }
 
