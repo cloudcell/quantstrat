@@ -64,10 +64,21 @@ ess <- function(account.st, portfolio.st)
     require(robustbase, quietly=TRUE)
     require(PerformanceAnalytics, quietly=TRUE)
 
-    portfolios.st <- ls(pos=.blotter, pattern=paste('portfolio', portfolio.st, '[0-9]*',sep='.'))
-    pr <- PortfReturns(Account = account.st, Portfolios=portfolios.st)
+    try(
+        portfolios.st <- ls(pos=.blotter, pattern=paste('portfolio', portfolio.st, '[0-9]*',sep='.'))
+    )
 
-    my.es <- ES(R=pr, clean='boudt')
+    try(
+        pr <- PortfReturns(Account = account.st, Portfolios=portfolios.st)
+    )
+
+    try(
+        my.es <- ES(R=pr, clean='boudt')
+    )
+
+    if(inherits(my.es,what = "try-error")) {
+        my.es <- NA
+    }
 
     return(my.es)
 }

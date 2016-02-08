@@ -110,7 +110,7 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
         result$training.timespan <- training.timespan
 
-        # TODO: make a utility function that prints a message inside
+        # TODO: make a utility function that prints text in a frame
         # Such output format stands out in large logs
         print("+-------------------------------------------------------------------+")
         print("| Phase 1.1: Training                                               |")
@@ -129,6 +129,9 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
         tradeStats.list <- result$apply.paramset$tradeStats
 
+        print(class(tradeStats.list))
+        View(t(tradeStats.list))
+
         if(!missing(k.testing) && k.testing>0)
         {
             if(!is.function(obj.func))
@@ -140,8 +143,15 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
             # select best param.combo (produces a selection vector)
             param.combo.idx <- do.call(obj.func, obj.args)
-            if(length(param.combo.idx) == 0)
+            if(length(param.combo.idx) == 0) {
+                # One of the reasons of faulures can be a failure of the
+                # user.func() which runs prior to obj.func() in the
+                # apply.paramset(). So when user.func fails, obj.func
+                # never gets a chance to run. Hence, empty result.
+                # Make sure user.func runs without producing errors
+                # (handle errors inside the user.func).
                 stop('obj.func() returned empty result')
+            }
 
             # print("the best param combo selection vector:")
             # print(param.combo.idx)
@@ -171,15 +181,6 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
                 assign('param.combo.idx', param.combo.idx, envir=.audit)
                 assign('param.combo.nr', param.combo.nr, envir=.audit)
                 assign('param.combo', param.combo, envir=.audit)
-
-                # index() produces spaces b/n date & time and colons (":"),
-                # which may cause errors, so they need a substitute (e.g. "-")
-                save(.audit, file=paste(audit.prefix, symbol.st,
-                                        gsub("[\\ :]","-",index(symbol[training.start])),
-                                        gsub("[\\ :]","-",index(symbol[training.end])),
-                                        'RData', sep='.'))
-
-                .audit <- NULL
             }
 
             print("+-------------------------------------------------------------------+")
@@ -188,7 +189,8 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
             # configure strategy to use selected param.combo
             # TODO: make an error check in 'install.param.combo' for
             # 'multiple combos' to prevent warnings and side effects of
-            # using a combo whose values are multidimensional vectors
+            # using a combo whose values are multidimensional vectors.
+            # TTR package functions may fail when such inputs are used
             print("param combo being installed:")
             print(param.combo)
             strategy <- install.param.combo(strategy, param.combo, paramset.label)
@@ -209,22 +211,25 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
             k <- k + 1
         }
 
-        # if(!is.null(.audit))
-        # {
-        #     # Moving this part closer to the place where .audit data is formed
-        #     # it would be much easier to read the code instead of jumping back
-        #     # and forth b/n training and testing pieces of the code
-        #
-        #     # index() produces spaces b/n date & time and colons (":"),
-        #     # which may cause errors, so they need a substitute (e.g. "-")
-        #     save(.audit, file=paste(audit.prefix, symbol.st,
-        #                             gsub("[\\s:]*","-",index(symbol[training.start])),
-        #                             gsub("[\\s:]*","-",index(symbol[training.end])),
-        #                             'RData', sep='.'))
-        #
-        #     .audit <- NULL
-        # }
+        print("+-------------------------------------------------------------------+")
+        print("| Phase 3: Accumulating training and testing results                |")
+        print("|          and optionally saving training '.audit' data             |")
+        print("+-------------------------------------------------------------------+")
 
+        # optionally saving training data (both from training & obj.func)
+        if(!is.null(.audit))
+        {
+            # index() produces spaces b/n date & time and colons (":"),
+            # which may cause errors, so they need a substitute (e.g. "-")
+            save(.audit, file=paste(audit.prefix, symbol.st,
+                                    gsub("[\\ :]","-",index(symbol[training.start])),
+                                    gsub("[\\ :]","-",index(symbol[training.end])),
+                                    'RData', sep='.'))
+
+            .audit <- NULL
+        }
+
+        # accumulating training and testing results
         results[[k]] <- result
 
         k <- k + k.testing
@@ -238,7 +243,7 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
     if(!is.null(audit.prefix))
     {
         print("+-------------------------------------------------------------------+")
-        print("| Phase 3.1: Preparing audit data for saving                        |")
+        print("| Phase 4.1: Preparing audit data for saving                        |")
         print("+-------------------------------------------------------------------+")
         .audit <- new.env()
 
@@ -255,7 +260,7 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
         if(include.insamples)
         {
             print("+-------------------------------------------------------------------+")
-            print("| Phase 3.2: Running backtests on in-sample reference portfolios    |")
+            print("| Phase 4.1.1: Including backtests on in-sample reference portfolios|")
             print("+-------------------------------------------------------------------+")
             # run backtests on in-sample reference portfolios
             result$apply.paramset <- apply.paramset(strategy.st=strategy.st, paramset.label=paramset.label,
@@ -265,7 +270,10 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
                                                     calc='slave', audit=.audit, verbose=verbose, ...=...)
         }
 
-        # audit prefix must not contains spaces
+        print("+-------------------------------------------------------------------+")
+        print("| Phase 4.2: Saving audit data                                      |")
+        print("+-------------------------------------------------------------------+")
+        # audit prefix must comply with OS file naming restrictions
         save(.audit, file=paste(audit.prefix, 'results', 'RData', sep='.'))
 
         .audit <- NULL
