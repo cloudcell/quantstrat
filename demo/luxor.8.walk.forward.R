@@ -59,7 +59,7 @@ ess <- function(account.st, portfolio.st)
     # TODO: post an issue at github to handle errors within user functions
     #       without crashing 'foreach'
     # TODO: fix this function by allowing it to handle small datasets
-    return(0)
+    # return(0)
 
     require(robustbase, quietly=TRUE)
     require(PerformanceAnalytics, quietly=TRUE)
@@ -67,19 +67,71 @@ ess <- function(account.st, portfolio.st)
     try(
         portfolios.st <- ls(pos=.blotter, pattern=paste('portfolio', portfolio.st, '[0-9]*',sep='.'))
     )
+    print("portfolio.st: "); print(portfolios.st) # for debugging only (delete later)
 
     try(
+        # 'pr' is an xts object with the header 'GBPUSD.DailyEndEq'
         pr <- PortfReturns(Account = account.st, Portfolios=portfolios.st)
     )
-
-    try(
-        my.es <- ES(R=pr, clean='boudt')
-    )
-
-    if(inherits(my.es,what = "try-error")) {
-        my.es <- NA
+    if(inherits(pr,what = "try-error")) {
+        print("setting pr equal to zeroe!")
+        # the field name remains as is after the following assignment
+        pr <- 0 # all the records of the xts object are now equal to zero
     }
 
+    # for debugging only (delete later)
+    print("str(pr): "); print(str(pr))
+    print("pr: "); print(pr)
+
+
+    # only run if not all pr values are equal to zero
+    if(!all(pr==0)) {
+        try(
+            # FIXME: "ES()" must handle exceptions properly!
+            my.es <- ES(R=pr, clean='boudt')
+	)
+        if(inherits(my.es,what = "try-error")) {
+            # **___The following comment belongs in a manual (selectively)___**
+            # FIXME: This is a temporary hack. Functions must handle exceptions
+            # themselves and produce NAs in exceptional cases. Because
+            # rbind() within apply.paramset() needs a variable _name_
+            # which cannot be given if a function simply returns NA upon failure
+            #
+            # So, once again, exceptions must be handled within functions !
+            # And functions must return NAs (where applicable)
+            #
+            # rbind() function that binds all the results in "apply.paramset()"
+            # should have results for all the combos, even if some fail.
+            # the user must not spend time figuring out where one of the
+            # results disappeared
+            #
+            # Alternatively, one may simply use NA's here instead of NULL
+            # and bind as is without proper column names simply using existing
+            # column names in the apply.paramset results$user.func dataframe
+            # http://stackoverflow.com/questions/19297475/simplest-way-to-get-rbind-to-ignore-column-names
+            # However, if the initial results$user.func() data frame row
+            # contains results from a failed attempt to calculate user.func(),
+            # this approach will not work. So this approach is not acceptable.
+            #
+            # Conclusion: handle errors within functions themselves and
+            # assign proper names to the output so combine function
+            # combines them properly. Until then, this hack will simply
+            # omit failed tests simply by supplying NULL instead of NA (which
+            # would be most appropriate)
+            my.es <- NULL # crude temporary hack (see comment above)
+        }
+    } else {
+        # FIXME: See the same note as in the "FIXME" just above.
+        my.es <- NULL  # crude temporary hack (see comment above)
+    }
+
+    # for debugging only (delete later)
+    print("str(my.es): "); print(str(my.es))
+    print("my.es: "); print(my.es)
+
+    # if the result is equal to NULL, such result is skipped at the combine
+    # stage, and the error does not cause problems: but this is a hack
+    # (also, read FIXME's above)
     return(my.es)
 }
 
@@ -102,16 +154,19 @@ my.obj.func <- function(x)
 
     # Choose decision parameter (uncomment)
     # param <- input$Profit.Factor
-    param <- input$Max.Drawdown
+    param <- input$Max.Drawdown # Drawdown is expressed as a negative value
     # param <- input$Net.Trading.PL
-
+    
+    print("param:"); print(param) # for debugging only
+    
     # Simple decision rule (uncomment / adjust as needed)
-    # result <- (max(param) == param)
-    result <- (min(param) == param)
+    result <- (max(param) == param)
+    # result <- (min(param) == param)
 
 
     # Leaving only a single optimum
     if(length(which(result == TRUE)) > 1) {
+        # ambiguous objective function
         warning("discarding extra objective function result(s)")
         uniqueIdx <- min(which(result == TRUE))
         result[] <- FALSE

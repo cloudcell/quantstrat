@@ -82,6 +82,9 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
     k <- 1; while(TRUE)
     {
+        print("+-------------------------------------------------------------------+")
+        print("| Phase 0: Starting the cycle                                       |")
+        print("+-------------------------------------------------------------------+")
         result <- list()
 
         # start and end of training window
