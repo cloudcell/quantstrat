@@ -59,7 +59,7 @@
 #' dimensionality of the index we need to loop over.  The speedup is the ratio of 
 #' (symbols\*total observations)/signal observations, so it can be significant for many strategies.
 #' 
-#' @param strategy an object or the name of an object of type 'strategy' to add the rule to
+#' @param strategy an object of type 'strategy' or a name of a strategy to add the rule to
 #' @param name name of the rule, must correspond to an R function
 #' @param arguments named list of default arguments to be passed to an rule function when executed
 #' @param parameters vector of strings naming parameters to be saved for apply-time definition
