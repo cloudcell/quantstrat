@@ -64,20 +64,13 @@ ess <- function(account.st, portfolio.st)
     require(robustbase, quietly=TRUE)
     require(PerformanceAnalytics, quietly=TRUE)
 
-    try(
-        portfolios.st <- ls(pos=.blotter, pattern=paste('portfolio', portfolio.st, '[0-9]*',sep='.'))
-    )
-    print("portfolio.st: "); print(portfolios.st) # for debugging only (delete later)
+    portfolios.st <- ls(pos=.blotter, pattern=paste('portfolio', portfolio.st, '[0-9]*',sep='.'))
 
-    try(
-        # 'pr' is an xts object with the header 'GBPUSD.DailyEndEq'
-        pr <- PortfReturns(Account = account.st, Portfolios=portfolios.st)
-    )
-    if(inherits(pr,what = "try-error")) {
-        print("setting pr equal to zeroe!")
-        # the field name remains as is after the following assignment
-        pr <- 0 # all the records of the xts object are now equal to zero
-    }
+    # for debugging only (delete later)
+    print("portfolio.st: "); print(portfolios.st)
+
+    # 'pr' is an xts object with the header 'GBPUSD.DailyEndEq'
+    pr <- PortfReturns(Account = account.st, Portfolios=portfolios.st)
 
     # for debugging only (delete later)
     print("str(pr): "); print(str(pr))
@@ -89,8 +82,9 @@ ess <- function(account.st, portfolio.st)
         try(
             # FIXME: "ES()" must handle exceptions properly!
             my.es <- ES(R=pr, clean='boudt')
-	)
+        )
         if(inherits(my.es,what = "try-error")) {
+            # -----------------------------------------------------------------#
             # **___The following comment belongs in a manual (selectively)___**
             # FIXME: This is a temporary hack. Functions must handle exceptions
             # themselves and produce NAs in exceptional cases. Because
@@ -118,6 +112,15 @@ ess <- function(account.st, portfolio.st)
             # combines them properly. Until then, this hack will simply
             # omit failed tests simply by supplying NULL instead of NA (which
             # would be most appropriate)
+            #
+            # -----------------------------------------------------------------#
+            # This hack could be improved: ES does not change the name of
+            # the output field in the dataframe, so we could simply assign
+            # the same "name" to the variable "my.es"; however, there could be
+            # exceptions in other functions, where we would not be able to
+            # know what field names the function produces, so we better
+            # return to fixing error handling within functions themselves.
+            # -----------------------------------------------------------------#
             my.es <- NULL # crude temporary hack (see comment above)
         }
     } else {
@@ -156,9 +159,9 @@ my.obj.func <- function(x)
     # param <- input$Profit.Factor
     param <- input$Max.Drawdown # Drawdown is expressed as a negative value
     # param <- input$Net.Trading.PL
-    
+
     print("param:"); print(param) # for debugging only
-    
+
     # Simple decision rule (uncomment / adjust as needed)
     result <- (max(param) == param)
     # result <- (min(param) == param)
