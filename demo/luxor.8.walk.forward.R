@@ -78,12 +78,24 @@ ess <- function(account.st, portfolio.st)
 
 
     # only run if not all pr values are equal to zero
+    # this condition prevents the error from happening
+    # (perhaps it could be replaced with something more efficient)
     if(!all(pr==0)) {
+    # if(1) { # uncomment this line to demonstrate the error
         try(
             # FIXME: "ES()" must handle exceptions properly!
+            #
+            # This log documents the bug: https://www.irccloud.com/pastebin/qboUGK9Y/
+            # "Processing param.combo 15"
             my.es <- ES(R=pr, clean='boudt')
         )
         if(inherits(my.es,what = "try-error")) {
+
+            # for debugging only (delete later)
+            print("my.es contains an error!")
+            print("str(my.es): "); print(str(my.es))
+            print("my.es: "); print(my.es)
+
             # -----------------------------------------------------------------#
             # **___The following comment belongs in a manual (selectively)___**
             # FIXME: This is a temporary hack. Functions must handle exceptions
