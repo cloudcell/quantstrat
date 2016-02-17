@@ -10,7 +10,7 @@ add.rule(strategy, name, arguments, parameters = NULL, label = NULL,
   timespan = NULL, store = FALSE, storefun = TRUE)
 }
 \arguments{
-\item{strategy}{an object of type 'strategy' or a name of a strategy to add the rule to}
+\item{strategy}{an object of type 'strategy' to add the rule to}
 
 \item{name}{name of the rule, must correspond to an R function}
 

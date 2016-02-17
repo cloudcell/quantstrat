@@ -7,7 +7,6 @@
 apply.paramset(strategy.st, paramset.label, portfolio.st, account.st,
   mktdata = NULL, nsamples = 0, user.func = NULL, user.args = NULL,
   calc = "slave", audit = NULL, packages = NULL, verbose = FALSE,
-  verbose.wrk = FALSE, save_memory = TRUE, combine_from_backup = TRUE,
   paramsets, ...)
 }
 \arguments{
@@ -34,8 +33,6 @@ apply.paramset(strategy.st, paramset.label, portfolio.st, account.st,
 \item{packages}{a vector specifying names of R packages to be loaded by the slave, default NULL}
 
 \item{verbose}{return full information, in particular the .blotter environment, default FALSE}
-
-\item{verbose.wrk}{display progress of applyStrategy() in 'worker' process(es), default FALSE}
 
 \item{paramsets}{a user-sepcified (sub)set of paramsets to run}
 

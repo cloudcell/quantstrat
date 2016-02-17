@@ -377,7 +377,6 @@ add.distribution.constraint <- function(strategy, paramset.label, distribution.l
 #' @param packages a vector specifying names of R packages to be loaded by the slave, default NULL
 #' @param audit a user-specified environment to store a copy of all portfolios, orderbooks and other data from the tests, or NULL to trash this information
 #' @param verbose return full information, in particular the .blotter environment, default FALSE
-#' @param verbose.wrk display progress of applyStrategy() in 'worker' process(es), default FALSE 
 #' @param paramsets a user-sepcified (sub)set of paramsets to run
 #' @param ... any other passthru parameters
 #'
@@ -386,10 +385,7 @@ add.distribution.constraint <- function(strategy, paramset.label, distribution.l
 #' @seealso \code{\link{add.distribution.constraint}}, \code{\link{add.distribution.constraint}}, \code{\link{delete.paramset}}
 #' @importFrom iterators iter
 
-#TODO: this function is to be restored to the original while the modified version shall be included in the package 'rfintools'
-#XXX foreach and quantstrat must start using 'bigmemory' package, until then the option 'save_memory' (memory on the master process, that is) shall be used. Otherwise the process crashes.
-# FIXME: save_memory and combine_from_backup & other hacks
-apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st, mktdata=NULL, nsamples=0, user.func=NULL, user.args=NULL, calc='slave', audit=NULL, packages=NULL, verbose=FALSE, verbose.wrk=FALSE, save_memory=TRUE, combine_from_backup=TRUE, paramsets, ...)
+apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st, mktdata=NULL, nsamples=0, user.func=NULL, user.args=NULL, calc='slave', audit=NULL, packages=NULL, verbose=FALSE, paramsets, ...)
 {
     must.have.args(match.call(), c('strategy.st', 'paramset.label', 'portfolio.st'))
 
@@ -402,9 +398,6 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
     account <- getAccount(account.st)
     orderbook <- getOrderBook(portfolio.st)
 
-    # XXX if paramsets are generated externally, distributions and constraints must be == NULL ? 
-    # see at the end of the function, when distributions & constraints are added to the audit file
-    # is that correct for the case with externally generated paramsets ???
     distributions <- strategy$paramsets[[paramset.label]]$distributions
     constraints <- strategy$paramsets[[paramset.label]]$constraints
 
@@ -437,13 +430,7 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
     {
         args <- list(...)
 
-        results <- list()                          
-        
-        if(combine_from_backup) { 
-            print("Skipping the in-memory combine process.")
-            return(results) # combine results externally (using backup data) 
-        }                         
-        
+        results <- list()
         for(i in 1:length(args))
         {
             r <- args[[i]]
@@ -486,33 +473,6 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         .packages=c('quantstrat', packages),
         .combine=combine, .multicombine=TRUE, .maxcombine=max(2,nrow(param.combos)),
         .export=c(env.functions, symbols), ...)
-    # Source: the following 'Reference/Note' was deduced mostly from the 
-    #         'foreach()' function code analysis
-    # 
-    # Reference:
-    #   This case of the foreach() function has two "passthough container" arguments ('...'):
-    #   1. one's "own '...'" argument (as defined in the foreach(..., etc. etc.)), 
-    #      which accepts all the custom arguments a user of the function supplies, 
-    #      including the "external '...'" argument (explained next);
-    #   2. "external '...'" argument, passed from the apply.paramset() ('from above').
-    #  
-    #   When foreach gets a '...' as an external argument, it expands it 
-    #   and appends all the containing objects (constants/variables) 
-    #   to a list of arguments (i.e. the internal to foreach() variable 'args', 
-    #   see source code of 'foreach()'). When the environment of a function
-    #   (in this case, 'foreach()') contains a variable with the same name 
-    #   as a some variable passed to foreach() within the "external '...'", R 
-    #   removes such a variable from the '...' ("passthrough container") as it 
-    #   would create a conflict (i.e. the environment would have more than one 
-    #   variable with the same name). So to avoid the conflict and, therefore, 
-    #   removal of conflicting variables from the "external '...'", such 
-    #   variables must be removed from the environment of the foreach object.
-    #
-    # Note:
-    #   The expansion of the "external '...'" passthrough occurs at the time the 
-    #   "external '...'" is being used / passed to any function. Until the expansion
-    #   the local objects "override" the objects sitting within the '...' variable.
-    
     # remove all but the param.combo iterator before calling %dopar%
     # this allows us to pass '...' through foreach to the expression
     fe$args <- fe$args[1]
@@ -568,7 +528,7 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         }
 
         strategy <- install.param.combo(strategy, param.combo, paramset.label)
-        applyStrategy(strategy, portfolios=result$portfolio.st, mktdata=mktdata, verbose=verbose.wrk, ...)
+        applyStrategy(strategy, portfolios=result$portfolio.st, mktdata=mktdata, ...)
 
         if(exists('redisContext'))
         {
@@ -585,37 +545,12 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
             updatePortf(result$portfolio.st, ...)
             result$tradeStats <- tradeStats(result$portfolio.st)
 
-        }                                                        
-        
-        result$portfolio <- getPortfolio(result$portfolio.st)
-        result$orderbook <- getOrderBook(result$portfolio.st)
-        
-        if(calc == 'slave') {
-            # XXX the following 2 lines must be moved AFTER
-            # getPortfolio and getOrderBook if they are
-            # to be accessible to the user.func !
             if(!is.null(user.func) && !is.null(user.args))
                 result$user.func <- do.call(user.func, user.args)
-            # here, the portfolio & orderbook can be saved on disk
-            # before we have a solution with 'bigmemory' package (or similar)
-				}    
-
-        # spare the memory of the master process:
-        # as an example:  1-year 1-minute bar data takes 4.3 Mbytes on disk
-        # in RAM, in R environment the same data breaks down to 
-        # 5192 bytes - tradeStats
-        # 36.3 Megabytes - 'portfolio' data
-        # 3.6 Megabytes - 'order book' data        
-        if(save_memory) {
-            result$portfolio <- NULL #getPortfolio(result$	portfolio.st)
-            result$orderbook <- NULL #getOrderBook(result$portfolio.st) 	
         }
+        result$portfolio <- getPortfolio(result$portfolio.st)
+        result$orderbook <- getOrderBook(result$portfolio.st)
 
-        if(combine_from_backup) {
-             print(paste0("Processed param.combo ", param.combo.num,". \"result\" is set to NULL. Use backup data to aggregate result." ))
-             result <- NULL
-        } 
-        
         # portfolio name has param.combo rowname in suffix, so
         # print param.combo number for diagnostics
         print(paste("Returning results for param.combo", param.combo.num))
@@ -630,9 +565,6 @@ apply.paramset <- function(strategy.st, paramset.label, portfolio.st, account.st
         .audit <- NULL
     else
     {
-        # XXX what should be done with externally generated paramsets ?
-        # especially if they don't correspond to distributions & constraints
-        # should those paramsets be added to the audit file as well?
         assign('distributions', distributions, envir=.audit)
         assign('constraints', constraints, envir=.audit)
         assign('paramset.label', paramset.label, envir=.audit)

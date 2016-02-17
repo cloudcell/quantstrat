@@ -31,4 +31,4 @@ LazyLoad: yes
 License: GPL-3
 Copyright: (c) 2009-2015
 ByteCompile: TRUE
-RoxygenNote: 5.0.1
+RoxygenNote: 5.0.0

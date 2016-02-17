@@ -2,7 +2,7 @@
 # R (http://r-project.org/) Quantitative Strategy Model Framework
 #
 # Copyright (c) 2009-2015
-# Peter Carl, Dirk Eddelbuettel, Brian G. Peterson, Jeffrey Ryan, and Joshua Ulrich
+# Peter Carl, Dirk Eddelbuettel, Brian G. Peterson, Jeffrey Ryan, and Joshua Ulrich 
 #
 # This library is distributed under the terms of the GNU Public License (GPL)
 # for full details see the file COPYING
@@ -16,18 +16,18 @@
 ###############################################################################
 
 #' Rolling Walk Forward Analysis
-#'
+#' 
 #' A wrapper for apply.paramset() and applyStrategy(), implementing a Rolling Walk Forward Analysis (WFA).
 #'
 #' walk.forward executes a strategy on a portfolio, while
 #' rolling a re-optimization of one of the strategies parameter sets during a specified time period (training window), then selecting an optimal
 #' parameter combination from the parameter set using an obj function, then applying the selected parameter combo to the next out-of-sample
 #' time period immediately following the training window (testing window). Once completed,
-#' the training window is shifted forward by a time period equal to the testing window size, and the process is repeated.
+#' the training window is shifted forward by a time period equal to the testing window size, and the process is repeated. 
 #' WFA stops when there are insufficient data left for a full testing window.
 #'
 #' For a complete description, see Jaekle&Tomasini chapter 6.
-#'
+#' 
 #' @param portfolio.st the name of the portfolio object
 #' @param account.st the name of the account object
 #' @param strategy.st the name of the strategy object
@@ -53,11 +53,11 @@
 #' @export
 
 walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
-                         period, k.training, nsamples=0, audit.prefix=NULL, k.testing,
-                         obj.func=function(x){which(x==max(x))},
-                         obj.args=list(x=quote(tradeStats.list$Net.Trading.PL)),
-                         anchored=FALSE, include.insamples=TRUE,
-                         ..., verbose=FALSE)
+    period, k.training, nsamples=0, audit.prefix=NULL, k.testing,
+    obj.func=function(x){which(x==max(x))},
+    obj.args=list(x=quote(tradeStats.list$Net.Trading.PL)),
+    anchored=FALSE, include.insamples=TRUE,
+    ..., verbose=FALSE)
 {
     must.have.args(match.call(), c('portfolio.st', 'strategy.st', 'paramset.label', 'k.training'))
 
@@ -82,9 +82,6 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
     k <- 1; while(TRUE)
     {
-        print("+-------------------------------------------------------------------+")
-        print("| Phase 0: Starting the cycle                                       |")
-        print("+-------------------------------------------------------------------+")
         result <- list()
 
         # start and end of training window
@@ -113,11 +110,6 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
         result$training.timespan <- training.timespan
 
-        # TODO: make a utility function that prints text in a frame
-        # Such output format stands out in large logs
-        print("+-------------------------------------------------------------------+")
-        print("| Phase 1.1: Training                                               |")
-        print("+-------------------------------------------------------------------+")
         print(paste('=== training', paramset.label, 'on', training.timespan))
 
         .audit <- NULL
@@ -126,58 +118,32 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
         # run backtests on training window
         result$apply.paramset <- apply.paramset(strategy.st=strategy.st, paramset.label=paramset.label,
-                                                portfolio.st=portfolio.st, account.st=account.st,
-                                                mktdata=symbol[training.timespan], nsamples=nsamples,
-                                                calc='slave', audit=.audit, verbose=verbose, ...=...)
+            portfolio.st=portfolio.st, account.st=account.st,
+            mktdata=symbol[training.timespan], nsamples=nsamples,
+            calc='slave', audit=.audit, verbose=verbose, ...=...)
 
         tradeStats.list <- result$apply.paramset$tradeStats
-
-        print(class(tradeStats.list))
-        View(t(tradeStats.list))
 
         if(!missing(k.testing) && k.testing>0)
         {
             if(!is.function(obj.func))
                 stop(paste(obj.func, 'unknown obj function', sep=': '))
 
-            print("+-------------------------------------------------------------------+")
-            print("| Phase 1.2: Selecting the best param combo                         |")
-            print("+-------------------------------------------------------------------+")
-
             # select best param.combo (produces a selection vector)
             param.combo.idx <- do.call(obj.func, obj.args)
-            if(length(param.combo.idx) == 0) {
-                # One of the reasons of faulures can be a failure of the
-                # user.func() which runs prior to obj.func() in the
-                # apply.paramset(). So when user.func fails, obj.func
-                # never gets a chance to run. Hence, empty result.
-                # Make sure user.func runs without producing errors
-                # (handle errors inside the user.func).
+            if(length(param.combo.idx) == 0)
                 stop('obj.func() returned empty result')
-            }
-
-            # print("the best param combo selection vector:")
-            # print(param.combo.idx)
 
             param.combo <- tradeStats.list[param.combo.idx, 1:grep('Portfolio', names(tradeStats.list)) - 1]
             param.combo.nr <- row.names(tradeStats.list)[param.combo.idx]
 
-            print("the best param combo row numbers:")
-            print(param.combo.nr)
-
             if(nrow(param.combo)>1) {
                 warning(paste0("Multiple combo solutions detected: using only ",
                             "the first.\nYou may want to adjust your objective ",
-                            "function so it selects only one solution, or to \n",
-                            "extend this code to enable 'forked' testing and ",
-                            "training over multiple solutions."))
+                            "function so it returns only one solution."))
                 param.combo <- param.combo[1,] # take the first
                 # param.combo <- param.combo[nrow(param.combo),] # take the last
             }
-
-            print("selected combo(s):")
-            print(param.combo)
-
             if(!is.null(.audit))
             {
                 assign('obj.func', obj.func, envir=.audit)
@@ -186,16 +152,7 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
                 assign('param.combo', param.combo, envir=.audit)
             }
 
-            print("+-------------------------------------------------------------------+")
-            print("| Phase 2: Testing the best param combo out of sample               |")
-            print("+-------------------------------------------------------------------+")
             # configure strategy to use selected param.combo
-            # TODO: make an error check in 'install.param.combo' for
-            # 'multiple combos' to prevent warnings and side effects of
-            # using a combo whose values are multidimensional vectors.
-            # TTR package functions may fail when such inputs are used
-            print("param combo being installed:")
-            print(param.combo)
             strategy <- install.param.combo(strategy, param.combo, paramset.label)
 
             result$testing.timespan <- testing.timespan
@@ -213,11 +170,6 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
             k <- k + 1
         }
-
-        print("+-------------------------------------------------------------------+")
-        print("| Phase 3: Accumulating training and testing results                |")
-        print("|          and optionally saving training '.audit' data             |")
-        print("+-------------------------------------------------------------------+")
 
         # optionally saving training data (both from training & obj.func)
         if(!is.null(.audit))
@@ -245,9 +197,6 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
     if(!is.null(audit.prefix))
     {
-        print("+-------------------------------------------------------------------+")
-        print("| Phase 4.1: Preparing audit data for saving                        |")
-        print("+-------------------------------------------------------------------+")
         .audit <- new.env()
 
         portfolio <- getPortfolio(portfolio.st)
@@ -262,29 +211,18 @@ walk.forward <- function(strategy.st, paramset.label, portfolio.st, account.st,
 
         if(include.insamples)
         {
-            print("+-------------------------------------------------------------------+")
-            print("| Phase 4.1.1: Including backtests on in-sample reference portfolios|")
-            print("+-------------------------------------------------------------------+")
             # run backtests on in-sample reference portfolios
             result$apply.paramset <- apply.paramset(strategy.st=strategy.st, paramset.label=paramset.label,
-                                                    portfolio.st=portfolio.st, account.st=account.st,
-                                                    #mktdata=NULL, nsamples=nsamples,
-                                                    mktdata=symbol[total.timespan], nsamples=nsamples,
-                                                    calc='slave', audit=.audit, verbose=verbose, ...=...)
+                portfolio.st=portfolio.st, account.st=account.st,
+                #mktdata=NULL, nsamples=nsamples,
+                mktdata=symbol[total.timespan], nsamples=nsamples,
+                calc='slave', audit=.audit, verbose=verbose, ...=...)
         }
 
-        print("+-------------------------------------------------------------------+")
-        print("| Phase 4.2: Saving audit data                                      |")
-        print("+-------------------------------------------------------------------+")
-        # audit prefix must comply with OS file naming restrictions
         save(.audit, file=paste(audit.prefix, 'results', 'RData', sep='.'))
 
         .audit <- NULL
     }
-
-    print("+-------------------------------------------------------------------+")
-    print("| Returning results and exiting walk.forward()                      |")
-    print("+-------------------------------------------------------------------+")
     return(results)
-}
+} 
 
