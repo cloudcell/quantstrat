@@ -26,7 +26,7 @@ exchange_rate('GBPUSD', tick_size=0.0001)
 ### quantmod
 
 getSymbols.FI(Symbols='GBPUSD',
-	      dir=system.file('extdata_full',package='quantstrat'),
+	      dir=system.file('extdata',package='quantstrat'),
 #	      dir='~/R/OHLC',
 	      from=.from, to=.to
 )

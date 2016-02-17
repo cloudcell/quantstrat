@@ -80,8 +80,9 @@ ess <- function(account.st, portfolio.st)
     # only run if not all pr values are equal to zero
     # this condition prevents the error from happening
     # (perhaps it could be replaced with something more efficient)
-    if(!all(pr==0)) {
-    # if(1) { # uncomment this line to demonstrate the error
+    # if(!all(pr==0)) {
+    if(1) { # uncomment this line to demonstrate the error
+        cat("<<<<<<<<<< Trying to run ES()... >>>>>>>>>>\n")
         try(
             # FIXME: "ES()" must handle exceptions properly!
             #
@@ -134,9 +135,11 @@ ess <- function(account.st, portfolio.st)
             # return to fixing error handling within functions themselves.
             # -----------------------------------------------------------------#
             my.es <- NULL # crude temporary hack (see comment above)
+            cat("<<<<<<<<<< The results from this user.func are NULL'ed: The call to ES failed. >>>>>>>>>>\n")
         }
     } else {
         # FIXME: See the same note as in the "FIXME" just above.
+        cat("<<<<<<<<<< The results from this user.func are NULL'ed: The input argument ('pr') was all zeroes >>>>>>>>>>\n")
         my.es <- NULL  # crude temporary hack (see comment above)
     }
 
