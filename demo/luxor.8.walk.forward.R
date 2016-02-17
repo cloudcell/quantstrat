@@ -168,18 +168,25 @@ my.obj.func <- function(x)
 
     # Select portfolios related to the symbol
     # (important for multi-instrument portfolios)
-    input <- x$tradeStats[(x$tradeStats$Symbol == 'GBPUSD'),]
-
+    # input <- x$tradeStats[(x$tradeStats$Symbol == 'GBPUSD'),]
+    input <- x$user.func
+    
+    print("input:"); print(input) # for debugging only
+    
+    # browser(is.na(input[15,"GBPUSD.DailyEndEq"]))
+    
     # Choose decision parameter (uncomment)
     # param <- input$Profit.Factor
-    param <- input$Max.Drawdown # Drawdown is expressed as a negative value
+    # param <- input$Max.Drawdown # Drawdown is expressed as a negative value
     # param <- input$Net.Trading.PL
+    param <- input$GBPUSD.DailyEndEq
 
     print("param:"); print(param) # for debugging only
 
+    
     # Simple decision rule (uncomment / adjust as needed)
-    result <- (max(param) == param)
-    # result <- (min(param) == param)
+    result <- (max(param, na.rm=TRUE) == param)
+    # result <- (min(param, na.rm=TRUE) == param)
 
 
     # Leaving only a single optimum
