@@ -37,7 +37,7 @@ initAcct(account.st, portfolios=portfolio.st, currency='USD', initEq=100000)
 initOrders(portfolio.st)
 
 # no need to load strategy as the sourced file "luxor.5.strategy.ordersets.R"
-# builds it from scratch anyway
+# builds it from scratch anyway (see above)
 # load.strategy(strategy.st)
 
 enable.rule(strategy.st, 'chain', 'StopLoss')
@@ -232,3 +232,4 @@ ts <- tradeStats(portfolio.st)
 save(ts, file=paste('GBPUSD', .from, .to, 'RData', sep='.'))
 
 print("# end of demo #")
+
