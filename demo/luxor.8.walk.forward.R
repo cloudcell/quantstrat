@@ -16,10 +16,12 @@ source(paste0(path.package("quantstrat"),"/demo/luxor.5.strategy.ordersets.R"))
 
 ### foreach and doMC
 require(foreach)
-require(doMC)
+# doMC is not supported on Windows (Win. defaults to single-core calculations).
+require(doMC) 
+# TODO: find out why multicore calc's produce a different result from 1-core calc's.
 registerDoMC(cores=1)
-# TODO: enable 2 or more cores to check whether the result is the same as using a single core on Linux
-# registerDoMC(cores=8) 
+# TODO: Find out why multicore calc's produce almost no warnings on Linux.
+# registerDoMC(cores=8)
 
 
 ### robustbase and PerformanceAnalytics
@@ -39,7 +41,7 @@ initAcct(account.st, portfolios=portfolio.st, currency='USD', initEq=100000)
 initOrders(portfolio.st)
 
 # no need to load strategy as the sourced file "luxor.5.strategy.ordersets.R"
-# builds it from scratch anyway (see above)
+# builds it from scratch anyway (see it sourced above)
 # load.strategy(strategy.st)
 
 enable.rule(strategy.st, 'chain', 'StopLoss')
@@ -142,7 +144,6 @@ r <- walk.forward(strategy.st,
 ### analyse
 print("saving a chart as a pdf file")
 pdf(paste('GBPUSD', .from, .to, 'pdf', sep='.'))
-# par(ask=FALSE) # avoid having to hit 'Enter'
 chart.Posn(portfolio.st)
 dev.off()
 
