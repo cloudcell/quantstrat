@@ -15,10 +15,12 @@ source(paste0(path.package("quantstrat"),"/demo/luxor.getSymbols.R"))
 source(paste0(path.package("quantstrat"),"/demo/luxor.5.strategy.ordersets.R"))
 
 ### foreach and doMC
-
 require(foreach)
 require(doMC)
-registerDoMC(cores=8)
+registerDoMC(cores=1)
+# TODO: enable 2 or more cores to check whether the result is the same as using a single core on Linux
+# registerDoMC(cores=8) 
+
 
 ### robustbase and PerformanceAnalytics
 
@@ -79,14 +81,15 @@ my.obj.func <- function(x)
     #-------------------------------------------------------------------------#
     # A step-by-step approach to defining the objective function
 
-    # Select portfolios related to the symbol
+    ## Select portfolios related to the symbol (uncomment)
     # (important for multi-instrument portfolios)
     # input <- x$tradeStats[(x$tradeStats$Symbol == 'GBPUSD'),]
     input <- x$user.func
     
     # print("input:"); print(input) # for debugging only
     
-    # Choose decision parameter (uncomment)
+    
+    ## Choose decision parameter (uncomment)
     # param <- input$Profit.Factor
     # param <- input$Max.Drawdown # Drawdown is expressed as a negative value
     # param <- input$Net.Trading.PL
@@ -94,6 +97,7 @@ my.obj.func <- function(x)
 
     # print("param:"); print(param) # for debugging only
 
+    
     # Simple decision rule (uncomment / adjust as needed)
     result <- (max(param, na.rm=TRUE) == param)
     # result <- (min(param, na.rm=TRUE) == param)
@@ -138,6 +142,8 @@ r <- walk.forward(strategy.st,
 ### analyse
 print("saving a chart as a pdf file")
 pdf(paste('GBPUSD', .from, .to, 'pdf', sep='.'))
+# par(ask=FALSE) # avoid having to hit 'Enter'
+chart.Posn(portfolio.st)
 dev.off()
 
 print("drawing a chart on the screen")
@@ -147,6 +153,7 @@ chart.Posn(portfolio.st)
 print("saving tradeStats")
 ts <- tradeStats(portfolio.st)
 save(ts, file=paste('GBPUSD', .from, .to, 'RData', sep='.'))
+
 
 print("# end of demo #")
 
