@@ -58,6 +58,7 @@ ess <- function(account.st, portfolio.st)
     require(PerformanceAnalytics, quietly=TRUE)
 
     portfolios.st <- ls(pos=.blotter, pattern=paste('portfolio', portfolio.st, '[0-9]*',sep='.'))
+    # 'pr' is an xts object with the header 'GBPUSD.DailyEndEq'
     pr <- PortfReturns(Account = account.st, Portfolios=portfolios.st)
 
     my.es <- ES(R=pr, clean='boudt')
@@ -81,17 +82,21 @@ my.obj.func <- function(x)
     # Select portfolios related to the symbol
     # (important for multi-instrument portfolios)
     # input <- x$tradeStats[(x$tradeStats$Symbol == 'GBPUSD'),]
-
+    input <- x$user.func
+    
+    # print("input:"); print(input) # for debugging only
+    
     # Choose decision parameter (uncomment)
     # param <- input$Profit.Factor
     # param <- input$Max.Drawdown # Drawdown is expressed as a negative value
     # param <- input$Net.Trading.PL
-    param <- x$user.func$GBPUSD.DailyEndEq
+    param <- input$GBPUSD.DailyEndEq
 
+    # print("param:"); print(param) # for debugging only
 
     # Simple decision rule (uncomment / adjust as needed)
-    result <- (max(param) == param)
-    # result <- (min(param) == param)
+    result <- (max(param, na.rm=TRUE) == param)
+    # result <- (min(param, na.rm=TRUE) == param)
 
 
     # Leaving only a single optimum (as there could be several)
