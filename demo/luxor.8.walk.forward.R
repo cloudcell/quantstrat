@@ -144,6 +144,7 @@ r <- walk.forward(strategy.st,
 ### analyse
 print("saving a chart as a pdf file")
 pdf(paste('GBPUSD', .from, .to, 'pdf', sep='.'))
+par(ask=FALSE) # avoid having to hit 'Enter'
 chart.Posn(portfolio.st)
 dev.off()
 
