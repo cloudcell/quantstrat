@@ -15,6 +15,7 @@ source(paste0(path.package("quantstrat"),"/demo/luxor.getSymbols.R"))
 source(paste0(path.package("quantstrat"),"/demo/luxor.5.strategy.ordersets.R"))
 
 ### foreach and doMC
+
 require(foreach)
 # doMC is not supported on Windows (Win. defaults to single-core calculations).
 require(doMC) 
