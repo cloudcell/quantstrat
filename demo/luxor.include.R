@@ -7,32 +7,65 @@ Sys.setenv(TZ="UTC")
 
 ###
 
-startDate = '2002-10-21'
+initDate = '2015-01-01'
+initDate = '2011-01-01'
+initDate = '2013-01-01'
+initDate = '2014-01-01'
+initDate = '2014-01-01'
+#initDate = '2015-01-04'
+initDate = '2011-01-01'
+initDate = '2010-01-01'
+initDate = '2016-01-01' 
 
-.from=startDate
+initDate = '2016-01-01'
+
+
+.from=initDate
 
 #.to='2008-07-04'
 #.to='2002-10-31'
-.to='2003-02-27'
+#.to='2003-03-31'
+.to = '2015-12-31'
+# .to='2014-03-31'
+# .to='2015-06-30'
+.to = '2010-12-31'
+.to = '2012-12-31'
+.to = '2013-12-31'
+.to = '2014-12-31'  
+#.to = '2015-12-30'
+.to = '2016-12-31'
 
 ###
 
-strategy.st = 'luxor'
-portfolio.st = 'forex'
-account.st = 'IB'
+strategy.st = 'sma1'
+portfolio.st = 'pSma1'
+account.st = 'FA' #FinAm
 
 ###
 
-.orderqty = 100000
+.orderqty = 10
 .threshold = 0.0005
-.txnfees = -6		# round-trip fee
+.txnfees = -1		# round-trip fee
 
 ### Distributions for paramset analysis
 
 .nsamples=80
 
-.FastSMA = (1:20)
-.SlowSMA = (30:80)
+.FastSMA = (23:35) #1:29
+.SlowSMA = (30:41) #30:80
+
+.FastSMA = (1:10) #1:29
+.SlowSMA = (1:10) #30:80
+
+.FastSMA = (35:35) #1:29
+.SlowSMA = (60:65) #30:80
+
+.FastSMA = (1:80) #1:29 1-50
+.FastSMA = (1:200) #1:29 1-50
+.SlowSMA = (20:200) #30:80 20-80
+
+.FastSMA = (1:400) #1:29 1-50
+.SlowSMA = (40:400) #30:80 20-80
 
 .StopLoss = seq(0.05, 2.4, length.out=48)/100
 .StopTrailing = seq(0.05, 2.4, length.out=48)/100
@@ -49,7 +82,18 @@ account.st = 'IB'
 .timespans<-outer(.timespans.start, .timespans.stop, FUN=paste, sep='/')
 
 # in order to run the full 24x24 hour scan above, comment out the following line:
-.timespans<-c('T06:00/T10:00', 'T07:00/T11:00', 'T08:00/T12:00', 'T09:00/T13:00', 'T10:00/T14:00', 'T11:00/T15:00', 'T12:00/T16:00')
+.timespans<-c('T06:00/T10:00',  'T07:00/T11:00',
+	      'T08:00/T12:00',  'T09:00/T13:00',
+              'T10:00/T14:00',  'T11:00/T15:00', 
+              'T12:00/T16:00',  'T13:00/T17:00', 
+	      'T14:00/T18:00',  'T15:00/T19:00', 
+              'T16:00/T20:00',  'T17:00/T21:00', 
+              'T18:00/T22:00',  'T19:00/T23:00', 
+              'T20:00/T00:00',  'T21:00/T01:00', 
+              'T22:00/T02:00',  'T23:00/T03:00', 
+              'T00:00/T04:00',  'T01:00/T05:00', 
+              'T02:00/T06:00',  'T03:00/T07:00',  
+	      'T04:00/T08:00',  'T05:00/T09:00')
 
 ### Actual arameters
 

@@ -10,20 +10,21 @@
 
 require(quantstrat)
 
+### Actual parameters
 source(paste0(path.package("quantstrat"),"/demo/luxor.include.R"))
-.fast = 10
-.slow = 30
+.fast = 35
+.slow = 381
 
 source(paste0(path.package("quantstrat"),"/demo/luxor.getSymbols.R"))
 
 ### blotter
 
-initPortf(portfolio.st, symbols='GBPUSD', currency='USD')
-initAcct(account.st, portfolios=portfolio.st, currency='USD')
+initPortf(portfolio.st, symbols='GAZP', initDate=initDate, currency='USD')
+initAcct(account.st, portfolios=portfolio.st, initDate=initDate, currency='USD')
 
 ### quantstrat
 
-initOrders(portfolio.st)
+initOrders(portfolio.st, initDate=initDate)
 
 ### define strategy
 
@@ -117,20 +118,32 @@ add.rule(strategy.st, name='ruleSignal',
 
 applyStrategy(strategy.st, portfolio.st)
 
-View(getOrderBook(portfolio.st)[[portfolio.st]]$GBPUSD)
+View(getOrderBook(portfolio.st)[[portfolio.st]]$GAZP)
 
 ###############################################################################
 
-updatePortf(portfolio.st, Symbols='GBPUSD', Dates=paste('::',as.Date(Sys.time()),sep=''))
+updatePortf(portfolio.st, Symbols='GAZP', Dates=paste('::',as.Date(Sys.time()),sep=''))
 
-chart.Posn(portfolio.st, "GBPUSD")
+chart.Posn(portfolio.st, "GAZP")
 
 ###############################################################################
 
-View(t(tradeStats(portfolio.st, 'GBPUSD')))
+View(t(tradeStats(portfolio.st, 'GAZP')))
 
 ###############################################################################
 
 # save the strategy in an .RData object for later retrieval
 
 save.strategy(strategy.st)
+
+
+
+##########################################
+ chart.ME(
+     Portfolio='pSma1',
+     Symbol='GAZP',     
+    #   	 Symbol='GBPUSD',
+     type='MAE',
+     scale='cash'
+ )
+ 
