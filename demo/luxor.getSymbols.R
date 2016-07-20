@@ -30,7 +30,7 @@ smb = 'GAZP'
 getSymbols.FI(Symbols=smb,
 	      # dir=system.file('extdata',package='quantstrat'),
         #dir=system.file('extdata_full', package='quantstrat'),
-        dir='d:/d-sto-R/moex/',
+        dir='e:/d-sto-R/moex/',
 #	      dir='~/R/OHLC',
 	      from=.from, to=.to
 )
