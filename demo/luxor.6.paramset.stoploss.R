@@ -15,14 +15,14 @@ source(paste0(path.package("quantstrat"),"/demo/luxor.getSymbols.R"))
 
 ###
 
-initPortf(portfolio.st, symbols='GBPUSD', currency='USD')
+initPortf(portfolio.st, symbols='GAZP', currency='RUB')
 addPosLimit(
             portfolio=portfolio.st,
-            symbol='GBPUSD',
+            symbol='GAZP',
             timestamp=startDate,
             maxpos=.orderqty)
 
-initAcct(account.st, portfolios=portfolio.st, currency='USD')
+initAcct(account.st, portfolios=portfolio.st, currency='RUB')
 
 ###
 
@@ -39,12 +39,16 @@ enable.rule('luxor', 'chain', 'StopLoss')
 ### END uncomment lines to activate StopLoss and/or StopTrailing and/or TakeProfit rules
 require(foreach)
 #registerDoSEQ()
-
+       
+if(0) {
 if (!"doMC" %in% installed.packages()[,1]) {
     install.packages("doMC")
 }
 require(doMC)
 registerDoMC(cores=8)
+} else {
+    registerDoSeq()
+}       
 
 #require(doParallel)
 #registerDoParallel(cores=2)

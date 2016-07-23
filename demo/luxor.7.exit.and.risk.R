@@ -16,8 +16,8 @@ source(paste0(path.package("quantstrat"),"/demo/luxor.getSymbols.R"))
 
 ### blotter
 
-initPortf(portfolio.st, symbols='GBPUSD', currency='USD')
-initAcct(account.st, portfolios=portfolio.st, currency='USD')
+initPortf(portfolio.st, symbols='GAZP', currency='RUB')
+initAcct(account.st, portfolios=portfolio.st, currency='RUB')
 
 ### quantstrat
 
@@ -33,7 +33,7 @@ load.strategy('luxor')
 
 addPosLimit(
             portfolio=portfolio.st,
-            symbol='GBPUSD',
+            symbol='GAZP',
             timestamp=startDate,
             maxpos=.orderqty)
 
@@ -41,26 +41,26 @@ initOrders(portfolio.st)
 
 applyStrategy(strategy.st, portfolio.st, prefer='Open')
 
-View(getOrderBook(portfolio.st)[[portfolio.st]]$GBPUSD)
+View(getOrderBook(portfolio.st)[[portfolio.st]]$GAZP)
 
 ###############################################################################
 
-updatePortf(portfolio.st, Symbols='GBPUSD', Dates=paste('::',as.Date(Sys.time()),sep=''))
+updatePortf(portfolio.st, Symbols='GAZP', Dates=paste('::',as.Date(Sys.time()),sep=''))
 
-chart.Posn(portfolio.st, "GBPUSD")
-
-###############################################################################
-
-View(t(tradeStats(portfolio.st, 'GBPUSD')))
+chart.Posn(portfolio.st, "GAZP")
 
 ###############################################################################
 
-print(tradeQuantiles('forex', 'GBPUSD'))
+View(t(tradeStats(portfolio.st, 'GAZP')))
+
+###############################################################################
+
+print(tradeQuantiles('forex', 'GAZP'))
 
 dev.new()
 
 ### Uncomment to choose appropriate MAE of MFE graph
 
-chart.ME(portfolio.st, 'GBPUSD', scale='percent', type='MAE')
+chart.ME(portfolio.st, 'GAZP', scale='percent', type='MAE')
 dev.new()
-chart.ME(portfolio.st, 'GBPUSD', scale='percent', type='MFE')
+chart.ME(portfolio.st, 'GAZP', scale='percent', type='MFE')

@@ -17,7 +17,7 @@ initDate = '2011-01-01'
 initDate = '2010-01-01'
 initDate = '2016-01-01' 
 
-initDate = '2016-01-01'
+initDate = '2016-01-04'
 
 
 .from=initDate
@@ -67,9 +67,17 @@ account.st = 'FA' #FinAm
 .FastSMA = (1:400) #1:29 1-50
 .SlowSMA = (40:400) #30:80 20-80
 
-.StopLoss = seq(0.05, 2.4, length.out=48)/100
+# Jaekle & T. section 3.5 -- START --
+# purpose: limit max dd
+.StopLoss = seq(5, 80, length.out=50) #/100
+
+# purpose: limit max dd within a winning trade
 .StopTrailing = seq(0.05, 2.4, length.out=48)/100
+
+# purpose: stopping after reaching a target profit 
 .TakeProfit = seq(0.1, 4.8, length.out=48)/100
+
+# Jaekle & T. section 3.5 -- END --
 
 .FastWFA = c(1, 3, 5, 7, 9)
 .SlowWFA = c(42, 44, 46)

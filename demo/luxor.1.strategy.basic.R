@@ -19,8 +19,8 @@ source(paste0(path.package("quantstrat"),"/demo/luxor.getSymbols.R"))
 
 ### blotter
 
-initPortf(portfolio.st, symbols='GAZP', initDate=initDate, currency='USD')
-initAcct(account.st, portfolios=portfolio.st, initDate=initDate, currency='USD')
+initPortf(portfolio.st, symbols='GAZP', initDate=initDate, currency='RUB')
+initAcct(account.st, portfolios=portfolio.st, initDate=initDate, currency='RUB')
 
 ### quantstrat
 

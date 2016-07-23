@@ -15,14 +15,14 @@ source(paste0(path.package("quantstrat"),"/demo/luxor.getSymbols.R"))
 
 ###
 
-initPortf(portfolio.st, symbols='GBPUSD', currency='USD')
+initPortf(portfolio.st, symbols='GAZP', currency='RUB')
 addPosLimit(
             portfolio=portfolio.st,
-            symbol='GBPUSD',
+            symbol='GAZP',
             timestamp=startDate,
             maxpos=.orderqty)
 
-initAcct(account.st, portfolios=portfolio.st, currency='USD')
+initAcct(account.st, portfolios=portfolio.st, currency='RUB')
 
 ###
 
