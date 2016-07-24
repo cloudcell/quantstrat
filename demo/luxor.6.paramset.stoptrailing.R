@@ -39,12 +39,15 @@ enable.rule('luxor', 'chain', 'StopTrailing')
 ### END uncomment lines to activate StopLoss and/or StopTrailing and/or TakeProfit rules
 require(foreach)
 #registerDoSEQ()
-
+ 
+if(0){
 if (!"doMC" %in% installed.packages()[,1]) {
     install.packages("doMC")
 }
 require(doMC)
 registerDoMC(cores=2)
+}      
+registerDoSEQ()
 
 #require(doParallel)
 #registerDoParallel(cores=2)
